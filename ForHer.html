@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Healing Pixels 🌸</title>
+    <!-- Load Tailwind CSS and Quicksand Font -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Initial Mood - Loved */
+            --bg-gradient: linear-gradient(135deg, #FAD0C4, #FFD1FF);
+            --text-color: #333;
+            /* Adjusted size for the 11x13 grid ratio */
+            --pixel-size: min(24px, 4vw); 
+            --pixel-light-color: #F06292; 
+            --shadow-color: rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text-color);
+            transition: background 1.5s ease-in-out;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            /* Added padding-bottom to ensure main content doesn't cover fixed footer */
+            padding: 20px 20px 60px 20px; 
+        }
+
+        .container {
+            background-color: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 10px 30px var(--shadow-color);
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 900px;
+            width: 100%;
+        }
+
+        /* --- PIXEL GRID HEART STYLES --- */
+        #pixel-grid {
+            /* Updated to 13 columns (based on your new map) */
+            display: grid;
+            grid-template-columns: repeat(13, var(--pixel-size));
+            /* grid-template-rows will be handled dynamically in JS for the 11 rows */
+            grid-auto-rows: var(--pixel-size);
+            margin: 0 auto 30px;
+            background-color: rgba(0, 0, 0, 0.05);
+            padding: 5px;
+            border-radius: 10px;
+            box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.1);
+            justify-content: center; /* Center the smaller grid */
+        }
+
+        .pixel {
+            width: var(--pixel-size);
+            height: var(--pixel-size);
+            /* This default background-color should only apply to non-heart spaces now */
+            background-color: rgba(255, 255, 255, 0.7); 
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s ease-out, box-shadow 0.2s ease-out;
+            margin: 1px;
+            position: relative;
+        }
+
+        .pixel:hover {
+            background-color: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+            z-index: 10;
+        }
+
+        /* Tooltip style */
+        .pixel .tooltip-text {
+            visibility: hidden;
+            background-color: var(--pixel-light-color);
+            color: #333;
+            text-align: center;
+            border-radius: 6px;
+            padding: 2px 6px;
+            position: absolute;
+            z-index: 20;
+            bottom: 120%; /* Position above the pixel */
+            left: 50%;
+            transform: translateX(-50%);
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.3s, visibility 0.3s;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .pixel:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        /* --- MOOD BUTTON STYLES (Standard) --- */
+        .mood-btn {
+            background-color: #fff;
+            color: #333;
+            border: 2px solid #ccc;
+            padding: 8px 16px;
+            /* Standard mood buttons keep a subtle roundness */
+            border-radius: 24px; 
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+        .mood-btn:hover {
+            background-color: var(--pixel-light-color);
+            border-color: var(--pixel-light-color);
+            color: #222;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        .mood-btn.active {
+            border-color: #333;
+            background-color: #333;
+            color: white;
+        }
+
+        /* --- RANDOM KIND WORD BUTTON (Unique Style) --- */
+        #random-word-btn {
+            /* Distinct Gradient Background */
+            background: linear-gradient(90deg, #ff9a9e 0%, #fad0c4 99%, #fad0c4 100%);
+            color: #4B0082; /* Deep purple text for contrast */
+            border: none;
+            padding: 10px 20px;
+            border-radius: 30px; /* Even rounder */
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            box-shadow: 0 4px 15px rgba(255, 154, 158, 0.4);
+            transform: scale(1);
+        }
+        #random-word-btn:hover {
+            box-shadow: 0 6px 20px rgba(255, 154, 158, 0.6);
+            transform: scale(1.05);
+        }
+        /* Click animation */
+        @keyframes pop {
+            0% { transform: scale(1); }
+            50% { transform: scale(0.95); }
+            100% { transform: scale(1); }
+        }
+        #random-word-btn.pop-on-click {
+            animation: pop 0.2s ease-out;
+        }
+
+        /* --- QUOTE/MESSAGE AREA --- */
+        #mood-quote-container {
+            min-height: 80px;
+        }
+        /* heart-message is now removed from HTML */
+
+        /* Responsive Adjustments */
+        @media (max-width: 600px) {
+            .container {
+                padding: 15px;
+            }
+            :root {
+                --pixel-size: 6vw; /* Adjusted for the new ratio */
+            }
+            #pixel-grid {
+                grid-template-columns: repeat(13, 6vw);
+                padding: 2vw;
+            }
+            .mood-btn, #random-word-btn {
+                padding: 8px 16px;
+                font-size: 0.8rem;
+            }
+            body {
+                /* Adjust padding-bottom for mobile view */
+                padding: 10px 10px 60px 10px; 
+            }
+        }
+    </style>
+</head>
+<body class="p-4 sm:p-8">
+
+    <div class="container text-center">
+        <h1 class="text-4xl font-bold mb-2">The Healing Pixels 🌸</h1>
+        <p class="text-gray-600 mb-6">Click the pixels below to fill your heart with light!</p>
+
+        <!-- PIXEL GRID HEART -->
+        <div id="pixel-grid" class="max-w-max">
+            <!-- Pixels will be generated here by JavaScript -->
+        </div>
+
+
+        <!-- MOOD BUTTONS SECTION -->
+        <div id="mood-buttons" class="flex flex-wrap justify-center gap-2 sm:gap-4 my-8">
+            <!-- Buttons generated by JavaScript -->
+        </div>
+
+        <!-- RANDOM KIND WORD DISPLAY (MOVED HERE) -->
+        <p id="kind-word-display" class="text-lg font-medium text-gray-700 my-4 min-h-[30px] opacity-0 transition-opacity duration-500">
+            <!-- Random kind words will appear here -->
+        </p>
+
+        <!-- RANDOM KIND WORD BUTTON (Bonus Feature) -->
+        <button id="random-word-btn" class="my-4">
+            Suno...
+        </button>
+        
+
+        <!-- DYNAMIC CONTENT AREA (Mood Quote and Spotify) -->
+        <div id="dynamic-content" class="my-6">
+            <p id="mood-quote" class="text-lg italic mb-4 min-h-[50px] transition-opacity duration-500 opacity-0"></p>
+            <div id="spotify-embed-container" class="flex justify-center min-h-[100px]">
+                <!-- Spotify iframe will be inserted here -->
+            </div>
+        </div>
+        
+    </div>
+
+    <!-- FOOTER: Using fixed positioning and bottom-0 for absolute bottom placement -->
+    <footer class="fixed bottom-0 left-0 right-0 py-4 text-center text-gray-500 text-sm z-10 bg-white/70 backdrop-blur-sm">
+        Made with love by Yug for Vanshi ♥️✨
+    </footer>
+
+
+    <script>
+        // --- 1. CONFIGURATION DATA ---
+
+        const PIXEL_GRID_ROWS = 11;
+        const PIXEL_GRID_COLS = 13;
+
+
+        // New 11x13 heart shape map (1 = heart pixel, 0 = empty space)
+        const HEART_SHAPE_MAP = [
+            [0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0],
+            [0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0],
+            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+            [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+            [0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0],
+            [0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0],
+            [0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0],
+        ];
+
+        // Red/Pink shades for pre-colored heart pixels
+        const RED_PINK_SHADES = [
+            "#FFC0CB", // Light Pink
+            "#FFB6C1", // Light Pink
+            "#F08080", // Light Coral
+            "#FA8072", // Salmon
+            "#E9967A", // Dark Salmon
+            "#CD5C5C", // Indian Red
+            "#DC143C", // Crimson
+            "#FF69B4"  // Hot Pink
+        ];
+
+        // Function to get a unique, consistent red/pink color for a pixel
+        const getPixelColor = (row, col) => {
+            // Use the index within the heart shape to select a color from the array
+            const index = (row * PIXEL_GRID_COLS + col) % RED_PINK_SHADES.length;
+            return RED_PINK_SHADES[index];
+        };
+
+
+        // Moods data (from the latest update)
+        const MOODS = {
+            Calm: {
+                gradient: 'linear-gradient(135deg, #A1C4FD, #C2E9FB)',
+                quote: "There will be peace... soon... When things are in control... And that will be soon... So let's reclaim it",
+                spotifyId: '3YLexwYPRyl9ULHCYe9Pny',
+                color: '#84B0F7'
+            },
+            Sad: {
+                gradient: 'linear-gradient(135deg, #667EEA, #764BA2)',
+                quote: "It's okay to fall apart sometimes... stars do too, and they still shine... ",
+                spotifyId: '4BGfzLrK6lgvKDjKSU7wrN',
+                color: '#667EEA'
+            },
+            Hopeful: {
+                gradient: 'linear-gradient(135deg, #FBD786, #C6FFDD)',
+                quote: "Even the darkest night will end... I am beside you... You are not alone...",
+                spotifyId: '1OBvdWCJe95fLmSx9YWwuY',
+                color: '#FBD786'
+            },
+            Loved: {
+                gradient: 'linear-gradient(135deg, #FAD0C4, #FFD1FF)',
+                quote: "Universe loves you... I love you too... Always here for you...",
+                spotifyId: '5zCnGtCl5Ac5zlFHXaZmhy',
+                color: '#F06292' 
+            },
+            Confused: {
+                gradient: 'linear-gradient(135deg, #FAD0C4, #A1C4FD)',
+                quote: "You have been through a lot.... Everything feels so uncertain... Let's clear it one by one....",
+                spotifyId: '0cJTjTH3XVTTJh8F4Uq1db',
+                color: '#A1C4FD' 
+            },
+            Healing: {
+                gradient: 'linear-gradient(135deg, #D4FC79, #96E6A1)',
+                quote: "Healing is not linear, but every step counts... Universe is here for you... i am here too... always... to support you",
+                spotifyId: '0loZn1c5heXie7OAtvK6nH',
+                color: '#D4FC79' 
+            }
+        };
+
+        const KIND_WORDS = [
+            'You are stronger than you think.',
+            'You deserve rest.',
+            'Your feelings are valid.',
+            'You are not alone.',
+            'You are doing great.',
+            'Be kind to yourself.',
+            'This too shall pass.',
+            'You are worthy of happiness.',
+            'A new day is coming.',
+            'You inspire me.'
+        ];
+
+        const PIXEL_HOVER_WORDS = [
+            'Peace', 'Love', 'Strength', 'Calm', 'Healing', 'Smile', 'Hope', 'Joy',
+            'Rest', 'Kindness', 'Breathe', 'Grow', 'Light', 'Today', 'Enough', 'Worthy', 'Glow', 'Shine'
+        ];
+
+        // --- 2. DOM ELEMENTS & STATE ---
+
+        const body = document.body;
+        const pixelGrid = document.getElementById('pixel-grid');
+        const moodButtonsContainer = document.getElementById('mood-buttons');
+        const moodQuoteElement = document.getElementById('mood-quote');
+        const spotifyContainer = document.getElementById('spotify-embed-container');
+        const randomWordBtn = document.getElementById('random-word-btn');
+        const kindWordDisplay = document.getElementById('kind-word-display');
+        
+        let activeMood = 'Loved';
+
+        // --- 3. UTILITY FUNCTIONS ---
+        
+        // Utility to slightly darken a hex color (by reducing lightness)
+        function darkenColor(hex, percent) {
+            let r = parseInt(hex.substring(1, 3), 16);
+            let g = parseInt(hex.substring(3, 5), 16);
+            let b = parseInt(hex.substring(5, 7), 16);
+
+            const factor = 1 - (percent / 100);
+
+            r = Math.floor(r * factor);
+            g = Math.floor(g * factor);
+            b = Math.floor(b * factor);
+
+            r = Math.min(255, Math.max(0, r)).toString(16).padStart(2, '0');
+            g = Math.min(255, Math.max(0, g)).toString(16).padStart(2, '0');
+            b = Math.min(255, Math.max(0, b)).toString(16).padStart(2, '0');
+
+            return `#${r}${g}${b}`;
+        }
+
+        const getRandomWord = (array) => array[Math.floor(Math.random() * array.length)];
+
+        // Simple debounce for resize event
+        let resizeTimer;
+        const debouncedResize = () => {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(() => {
+                // Resize logic (currently handled mostly by CSS)
+            }, 250);
+        };
+
+
+        // --- 4. PIXEL GRID LOGIC ---
+
+        function handlePixelClick(event) {
+            const pixel = event.currentTarget;
+            const initialColor = pixel.dataset.initialColor;
+            const darkenedColor = pixel.dataset.darkenedColor;
+            
+            if (!initialColor || !darkenedColor) return; 
+
+            const isDarkened = pixel.dataset.darkened === 'true';
+
+            if (isDarkened) {
+                // Revert to BRIGHT color (initial state)
+                pixel.style.backgroundColor = initialColor;
+                // Subtle default shadow when bright
+                pixel.style.boxShadow = '0 0 5px rgba(0, 0, 0, 0.2)'; 
+                pixel.dataset.darkened = 'false';
+            } else {
+                // Apply DARKER color (clicked state)
+                pixel.style.backgroundColor = darkenedColor;
+                // Add a more prominent shadow when clicked to emphasize the press
+                pixel.style.boxShadow = `0 0 8px ${darkenedColor}`; 
+                pixel.dataset.darkened = 'true';
+            }
+            // No heart message update logic needed now
+        }
+
+        function createPixel(rowIndex, colIndex, isHeart) {
+            if (!isHeart) {
+                // Create an empty space placeholder
+                const placeholder = document.createElement('div');
+                placeholder.classList.add('pixel'); // Use .pixel for size, but hide interaction
+                placeholder.style.backgroundColor = 'transparent';
+                placeholder.style.boxShadow = 'none';
+                placeholder.style.cursor = 'default';
+                return placeholder;
+            }
+
+            const pixel = document.createElement('div');
+            pixel.classList.add('pixel');
+            pixel.dataset.index = `${rowIndex}-${colIndex}`;
+
+            // Store Initial Color and Darkened Color
+            const initialColor = getPixelColor(rowIndex, colIndex);
+            // Darken by 15% for a noticeable, but not harsh, effect
+            const darkenedColor = darkenColor(initialColor, 15); 
+            
+            pixel.dataset.initialColor = initialColor; // Store the bright color
+            pixel.dataset.darkenedColor = darkenedColor; // Store the dark color
+            pixel.dataset.darkened = 'false'; // Initial state is bright
+            
+            // Tooltip creation
+            const tooltip = document.createElement('span');
+            tooltip.classList.add('tooltip-text');
+            tooltip.textContent = getRandomWord(PIXEL_HOVER_WORDS);
+            pixel.appendChild(tooltip);
+
+            pixel.addEventListener('click', handlePixelClick);
+            
+            // Re-generate hover text on mouse enter
+            pixel.addEventListener('mouseenter', () => {
+                tooltip.textContent = getRandomWord(PIXEL_HOVER_WORDS);
+            });
+
+            // Set the initial state: bright
+            pixel.style.backgroundColor = initialColor;
+            // Subtle initial shadow
+            pixel.style.boxShadow = '0 0 5px rgba(0, 0, 0, 0.2)'; 
+
+            return pixel;
+        }
+
+        function initializePixelGrid() {
+            pixelGrid.innerHTML = ''; // Clear existing grid
+
+            HEART_SHAPE_MAP.forEach((row, rowIndex) => {
+                row.forEach((isHeart, colIndex) => {
+                    const pixel = createPixel(rowIndex, colIndex, isHeart);
+                    pixelGrid.appendChild(pixel);
+                });
+            });
+            // No heart fill status update needed now
+        }
+
+
+        // --- 5. MOOD CONTROL LOGIC ---
+
+        function updateUI(moodKey) {
+            const mood = MOODS[moodKey];
+            
+            // 1. Update Global Style (CSS Variables)
+            body.style.setProperty('--bg-gradient', mood.gradient);
+            body.style.setProperty('--pixel-light-color', mood.color);
+            activeMood = moodKey;
+
+            // 2. Update Quote
+            moodQuoteElement.classList.remove('opacity-100');
+            moodQuoteElement.classList.add('opacity-0');
+            
+            setTimeout(() => {
+                moodQuoteElement.textContent = `"${mood.quote}"`;
+                moodQuoteElement.classList.remove('opacity-0');
+                moodQuoteElement.classList.add('opacity-100');
+            }, 500); // Wait for fade-out before changing text
+
+            // 3. Update Spotify Embed
+            const iframeSrc = `https://open.spotify.com/embed/track/${mood.spotifyId}?utm_source=generator`;
+            spotifyContainer.innerHTML = `
+                <iframe 
+                    style="border-radius:12px; transition: opacity 0.5s;" 
+                    src="${iframeSrc}" 
+                    width="100%" 
+                    height="100px" 
+                    frameBorder="0" 
+                    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                ></iframe>
+            `;
+
+            // 4. Update Button Active State
+            document.querySelectorAll('.mood-btn[data-mood]').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            // We need to exclude the Random Word button which now uses a unique ID
+            const activeMoodButton = document.querySelector(`.mood-btn[data-mood="${moodKey}"]`);
+            if (activeMoodButton) {
+                activeMoodButton.classList.add('active');
+            }
+
+            // 5. Update Lit Pixels with New Mood Shadow Color
+            // This is mostly deprecated now but we can keep the glow logic for 'darkened' pixels if desired.
+            // Since we are no longer using the glow based on mood color, we can remove this loop.
+        }
+
+        function handleMoodButtonClick(event) {
+            const moodKey = event.currentTarget.dataset.mood;
+            updateUI(moodKey);
+        }
+
+        function initializeMoodButtons() {
+            Object.keys(MOODS).forEach(key => {
+                const button = document.createElement('button');
+                button.textContent = key;
+                button.classList.add('mood-btn');
+                button.dataset.mood = key;
+                button.addEventListener('click', handleMoodButtonClick);
+                moodButtonsContainer.appendChild(button);
+            });
+        }
+
+        // --- 6. RANDOM KIND WORD LOGIC (Bonus) ---
+
+        function showRandomKindWord() {
+            const word = getRandomWord(KIND_WORDS);
+
+            // Apply animation class temporarily
+            randomWordBtn.classList.add('pop-on-click');
+            setTimeout(() => {
+                randomWordBtn.classList.remove('pop-on-click');
+            }, 200);
+
+            kindWordDisplay.classList.remove('opacity-100');
+            kindWordDisplay.classList.add('opacity-0');
+
+            setTimeout(() => {
+                kindWordDisplay.textContent = word;
+                kindWordDisplay.classList.remove('opacity-0');
+                kindWordDisplay.classList.add('opacity-100');
+            }, 500);
+        }
+
+
+        // --- 7. INITIALIZATION ---
+
+        window.onload = function() {
+            // Check for initial auth state (not strictly needed for this frontend-only app, but good practice)
+            const auth = {}; // Mock auth object
+            const userId = 'local-user'; // Mock user ID
+
+            // 1. Initialize Components
+            initializePixelGrid();
+            initializeMoodButtons();
+
+            // 2. Set Initial UI State (Default to 'Loved')
+            updateUI(activeMood); 
+
+            // 3. Setup Listeners
+            randomWordBtn.addEventListener('click', showRandomKindWord);
+            window.addEventListener('resize', debouncedResize);
+
+            // Print success message to console
+            console.log('The Healing Pixels application initialized successfully.');
+        };
+    </script>
+</body>
+</html>
