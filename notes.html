@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secret Chamber: Goth Flashcards 🖤</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Fauna+One&display=swap" rel="stylesheet">
+    <style>
+        /* --- Blue Dark Theme Variables (Updated) --- */
+        :root {
+            --bg-dark: #080A1A; /* Deep Dark Blue-Black Background */
+            --card-bg-dark: #10182E; /* Richer Card Background */
+            --card-bg-light: #182440; /* Slight contrast for elevated elements */
+            --text-primary: #E5F1FF; /* Pale, cool-white text */
+            --text-secondary: #A7BBD2; /* Muted light blue/gray secondary text */
+            --accent-color: #4FC3F7; /* Vibrant Cyan/Electric Blue Accent */
+            --shadow-color: rgba(0, 0, 0, 0.7); /* Stronger shadow */
+            --card-width: min(90vw, 400px);
+            --min-card-height: 280px; /* Slightly taller minimum */
+        }
+
+        body {
+            font-family: 'Fauna One', serif;
+            background-color: var(--bg-dark);
+            min-height: 100vh;
+            padding: 40px 20px 80px 20px;
+            color: var(--text-primary);
+            transition: background-color 0.8s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative; /* Needed for absolute positioning of canvas */
+            overflow-x: hidden; /* Prevent horizontal scroll due to card swipe rotation */
+        }
+
+        /* --- Canvas for Stars --- */
+        #starCanvas {
+            position: fixed; /* Fixed position to cover the entire viewport */
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1; /* Place behind other content */
+            opacity: 0.8; /* Slight transparency for background effect */
+        }
+
+        /* --- Header and Back Button --- */
+        .header {
+            width: 100%;
+            max-width: var(--card-width);
+            text-align: center;
+            margin-bottom: 30px;
+            position: relative; /* Bring to front of canvas */
+            z-index: 1;
+        }
+        .header h1 {
+            font-family: 'Cinzel', serif;
+            color: var(--accent-color);
+            text-shadow: 0 0 5px var(--accent-color);
+        }
+        
+        .back-btn {
+            background-color: var(--card-bg-light);
+            color: var(--accent-color);
+            border: 1px solid var(--accent-color);
+            padding: 10px 20px;
+            border-radius: 9999px;
+            margin-top: 30px;
+            transition: all 0.3s;
+            display: inline-block;
+            font-weight: 700;
+            position: relative; /* Bring to front of canvas */
+            z-index: 1;
+        }
+        .back-btn:hover {
+            background-color: var(--card-bg-dark);
+            box-shadow: 0 0 15px var(--accent-color);
+        }
+
+        /* --- Card Stack Styles --- */
+        .card-stack {
+            position: relative;
+            width: var(--card-width);
+            height: auto; 
+            min-height: var(--min-card-height); 
+            perspective: 1000px; 
+            margin-bottom: 50px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            z-index: 1; /* Bring to front of canvas */
+        }
+
+        .note-card {
+            position: absolute;
+            width: 100%;
+            height: auto;
+            min-height: var(--min-card-height); 
+            border-radius: 12px;
+            background-color: var(--card-bg-dark);
+            box-shadow: 0 6px 20px var(--shadow-color);
+            padding: 30px;
+            cursor: grab;
+            user-select: none;
+            will-change: transform, left, top;
+            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-style: preserve-3d;
+            opacity: 0; 
+            pointer-events: none; 
+            white-space: pre-wrap; 
+            word-wrap: break-word; 
+            border: 1px solid var(--card-bg-light);
+        }
+
+        .note-card:nth-child(1) { 
+            opacity: 1.0; 
+            transform: translateZ(1px); 
+            pointer-events: auto;
+            position: relative;
+        } 
+
+        .card-title {
+            font-family: 'Cinzel', serif;
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            color: var(--accent-color);
+            border-bottom: 1px solid var(--card-bg-light);
+            padding-bottom: 5px;
+        }
+        .card-body {
+            font-size: 1.0rem;
+            line-height: 1.6;
+            color: var(--text-secondary);
+        }
+
+        /* Animation class applied when a card is swiped */
+        .swiping-left {
+            transform: translateX(-1000px) rotateZ(-30deg) scale(0.8) !important;
+            opacity: 0 !important;
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1) !important; 
+        }
+        .swiping-right {
+            transform: translateX(1000px) rotateZ(30deg) scale(0.8) !important;
+            opacity: 0 !important;
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Canvas for stars - placed behind other content --><canvas id="starCanvas"></canvas>
+
+    <div class="header">
+        <h1 class="text-4xl font-bold mb-2 tracking-wider">Shadow Vault</h1>
+        <p class="text-sm" style="color: var(--text-secondary);">Unveil your hidden musings with a gentle sweep.</p>
+    </div>
+
+    <div class="card-stack" id="cardStack">
+        <!-- Cards are generated by JavaScript --></div>
+    
+    <a href="index.html" class="back-btn" role="button">
+        ← Return to the Sanctuary
+    </a>
+
+    <script>
+        // NOTE: The note content contains the original text provided by the user.
+        const CARD_DATA = [
+            { title: "Nekomata", body: "Omniscient baby" },
+            { title: "Bakri", body: "Dum dum baby" },
+            { title: "Sweetie", body: "Cuite and Softie baby" },
+            { title: "Basundi", body: "Creamy and Tasty baby" },
+            { title: "Freaky", body: "Da almighty strong baby woman" }
+        ];
+
+        const cardStack = document.getElementById('cardStack');
+        let cards = [];
+        const SWIPE_THRESHOLD = 50; 
+        const SWIPE_ANIMATION_DURATION = 600; 
+
+        // --- Starfield Canvas Logic ---
+        const canvas = document.getElementById('starCanvas');
+        const ctx = canvas.getContext('2d');
+        let stars = [];
+        const numStars = 100; // Number of stars
+        const twinkleSpeed = 0.05; // How fast stars fade in/out
+        const maxStarSize = 2; // Max radius of a star
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            stars = []; // Clear and re-generate stars on resize
+            initStars();
+        }
+
+        class Star {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.radius = Math.random() * maxStarSize;
+                this.alpha = Math.random(); // Initial opacity
+                this.twinkleFactor = Math.random() * Math.PI * 2; // Unique twinkle phase
+                this.speed = (Math.random() * 0.5 + 0.5) * twinkleSpeed; // Random speed for twinkling
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(255, 255, 255, ${this.alpha})`;
+                ctx.fill();
+            }
+
+            update() {
+                this.twinkleFactor += this.speed;
+                // Use sine wave for smooth fading in and out
+                this.alpha = (Math.sin(this.twinkleFactor) * 0.5) + 0.5; 
+                if (this.alpha < 0.1) this.alpha = 0.1; // Ensure stars don't completely disappear
+                if (this.alpha > 0.9) this.alpha = 0.9; // Cap maximum brightness
+            }
+        }
+
+        function initStars() {
+            for (let i = 0; i < numStars; i++) {
+                stars.push(new Star());
+            }
+        }
+
+        function animateStars() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear canvas
+            stars.forEach(star => {
+                star.update();
+                star.draw();
+            });
+            requestAnimationFrame(animateStars); // Loop animation
+        }
+
+        // --- Card Swiping Logic ---
+
+        function createCardElement(data) {
+            const card = document.createElement('div');
+            card.classList.add('note-card');
+            card.innerHTML = `
+                <div class="card-title">${data.title}</div>
+                <div class="card-body">${data.body.replace(/\n/g, '<br>')}</div>
+            `;
+            return card;
+        }
+
+        function renderStack() {
+            cardStack.innerHTML = '';
+            cards.forEach((card, index) => {
+                card.style.transition = 'all 0.35s cubic-bezier(0.4, 0, 0.2, 1)';
+                card.classList.remove('swiping-left', 'swiping-right');
+                
+                card.removeEventListener('mousedown', startDrag);
+                card.removeEventListener('touchstart', startDrag);
+                
+                cardStack.appendChild(card); 
+
+                if (index === 0) {
+                    setupSwipeListeners(card);
+                    card.style.cursor = 'grab';
+                    card.style.position = 'relative'; 
+                    setTimeout(() => {
+                        if (cardStack && card.offsetHeight > 0) {
+                           cardStack.style.height = `${Math.max(card.offsetHeight, parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--min-card-height')))}px`;
+                        }
+                    }, 50); 
+                } else {
+                    card.style.cursor = 'default';
+                    card.style.position = 'absolute';
+                }
+            });
+        }
+
+        let startX = 0;
+        let isDragging = false;
+        let activeCard = null;
+
+        function setupSwipeListeners(card) {
+            activeCard = card;
+            card.addEventListener('mousedown', startDrag);
+            card.addEventListener('touchstart', startDrag);
+        }
+
+        function getClientX(e) {
+            return e.clientX || e.touches?.[0]?.clientX;
+        }
+
+        function startDrag(e) {
+            if (e.target.closest('a')) return; 
+            isDragging = true;
+            startX = getClientX(e);
+            if (!activeCard) return;
+
+            activeCard.style.transition = 'none'; 
+
+            document.addEventListener('mousemove', drag);
+            document.addEventListener('mouseup', endDrag);
+            document.addEventListener('touchmove', drag);
+            document.addEventListener('touchend', endDrag);
+        }
+
+        function drag(e) {
+            if (!isDragging || !activeCard) return;
+
+            const currentX = getClientX(e);
+            if (!currentX) return;
+            
+            const deltaX = currentX - startX;
+            const rotation = deltaX / 25; 
+
+            activeCard.style.transform = `translateX(${deltaX}px) rotateZ(${rotation}deg)`;
+        }
+
+        function endDrag(e) {
+            if (!isDragging || !activeCard) return;
+            isDragging = false;
+            
+            const endX = getClientX(e) || e.changedTouches?.[0]?.clientX;
+            if (!endX) return;
+
+            const deltaX = endX - startX;
+
+            document.removeEventListener('mousemove', drag);
+            document.removeEventListener('mouseup', endDrag);
+            document.removeEventListener('touchmove', drag);
+            document.removeEventListener('touchend', endDrag);
+
+            if (Math.abs(deltaX) > SWIPE_THRESHOLD) {
+                swipeCard(deltaX > 0 ? 'right' : 'left');
+            } else {
+                activeCard.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)';
+                activeCard.style.transform = ''; 
+            }
+        }
+
+        function swipeCard(direction) {
+            if (!activeCard) return;
+
+            activeCard.classList.add(`swiping-${direction}`);
+            
+            setTimeout(() => {
+                const swipedCard = cards.shift(); 
+                cards.push(swipedCard);
+                
+                swipedCard.style.transition = 'none'; 
+                swipedCard.style.transform = ''; 
+                swipedCard.classList.remove('swiping-left', 'swiping-right');
+                
+                renderStack();
+
+            }, SWIPE_ANIMATION_DURATION);
+        }
+
+        // --- Initialization ---
+
+        window.onload = function() {
+            // Initialize card stack
+            cards = CARD_DATA.map(createCardElement);
+            renderStack();
+
+            // Initialize starfield
+            resizeCanvas(); // Set initial canvas size and populate stars
+            animateStars(); // Start the star animation loop
+            window.addEventListener('resize', resizeCanvas); // Handle canvas resize
+
+            console.log('Shadow Vault UI initialized with Goth-Google theme and twinkling stars!');
+        };
+    </script>
+</body>
+</html>

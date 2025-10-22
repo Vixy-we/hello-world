@@ -115,10 +115,33 @@
             color: #222;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
         }
+        
+        /* MODIFIED: Added glow effect using the dynamic CSS variable */
         .mood-btn.active {
             border-color: #333;
             background-color: #333;
             color: white;
+            /* ADDED: Dynamic Glow/Shadow using the --pixel-light-color variable */
+            box-shadow: 0 0 10px var(--pixel-light-color), 0 0 5px var(--pixel-light-color); 
+            transform: scale(1.05); /* Added slight scale for emphasis */
+        }
+
+        /* --- SECRET CHAMBER BUTTON (New Style) --- */
+        #secret-chamber-btn {
+            /* Subtle blue/purple gradient */
+            background: linear-gradient(90deg, #C2E9FB 0%, #A1C4FD 100%);
+            color: #4A00B4; /* Dark purple/blue text */
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-weight: 600;
+            margin-top: 30px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 10px rgba(161, 196, 253, 0.5);
+        }
+        #secret-chamber-btn:hover {
+            box-shadow: 0 6px 15px rgba(161, 196, 253, 0.7);
+            transform: translateY(-2px);
         }
 
         /* --- RANDOM KIND WORD BUTTON (Unique Style) --- */
@@ -152,7 +175,6 @@
         #mood-quote-container {
             min-height: 80px;
         }
-        /* heart-message is now removed from HTML */
 
         /* Responsive Adjustments */
         @media (max-width: 600px) {
@@ -185,6 +207,7 @@
         Things may feel heavy now... but it will get better...<br>
         Slowly... steadily… we will find our way through this...
         </p>
+
         <!-- PIXEL GRID HEART -->
         <div id="pixel-grid" class="max-w-max">
             <!-- Pixels will be generated here by JavaScript -->
@@ -214,6 +237,16 @@
                 <!-- Spotify iframe will be inserted here -->
             </div>
         </div>
+
+        <!-- NEW SECRET CHAMBER BUTTON -->
+        <!-- NOTE: Since this is a single file app, 'notes.html' won't work 
+             unless you implement state management to switch views.
+             For now, I'll keep the link as-is, assuming external navigation,
+             but note it won't work in this sandboxed single-file environment.
+        -->
+        <button id="secret-chamber-btn" onclick="window.location.href='notes.html';">
+            🔑 Secret Chamber
+        </button>
         
     </div>
 
@@ -271,37 +304,37 @@
                 gradient: 'linear-gradient(135deg, #A1C4FD, #C2E9FB)',
                 quote: "There will be peace... soon... When things are in control... And that will be soon... So let's reclaim it",
                 spotifyId: '3YLexwYPRyl9ULHCYe9Pny',
-                color: '#84B0F7'
+                color: '#84B0F7' // Calm blue
             },
             Sad: {
                 gradient: 'linear-gradient(135deg, #667EEA, #764BA2)',
                 quote: "It's okay to fall apart sometimes... stars do too, and they still shine... ",
                 spotifyId: '4BGfzLrK6lgvKDjKSU7wrN',
-                color: '#667EEA'
+                color: '#667EEA' // Sad purple
             },
             Hopeful: {
                 gradient: 'linear-gradient(135deg, #FBD786, #C6FFDD)',
                 quote: "Even the darkest night will end... I am beside you... You are not alone...",
                 spotifyId: '1OBvdWCJe95fLmSx9YWwuY',
-                color: '#FBD786'
+                color: '#FBD786' // Hopeful yellow
             },
             Loved: {
                 gradient: 'linear-gradient(135deg, #FAD0C4, #FFD1FF)',
                 quote: "Universe loves you... I love you too... Always here for you...",
                 spotifyId: '5zCnGtCl5Ac5zlFHXaZmhy',
-                color: '#F06292' 
+                color: '#F06292' // Loved pink
             },
             Confused: {
                 gradient: 'linear-gradient(135deg, #FAD0C4, #A1C4FD)',
                 quote: "You have been through a lot.... Everything feels so uncertain... Let's clear it one by one....",
                 spotifyId: '0cJTjTH3XVTTJh8F4Uq1db',
-                color: '#A1C4FD' 
+                color: '#A1C4FD' // Confused light blue
             },
             Healing: {
                 gradient: 'linear-gradient(135deg, #D4FC79, #96E6A1)',
                 quote: "Healing is not linear, but every step counts... Universe is here for you... i am here too... always... to support you",
                 spotifyId: '0loZn1c5heXie7OAtvK6nH',
-                color: '#D4FC79' 
+                color: '#D4FC79' // Healing green
             }
         };
 
@@ -392,7 +425,6 @@
                 pixel.style.boxShadow = `0 0 8px ${darkenedColor}`; 
                 pixel.dataset.darkened = 'true';
             }
-            // No heart message update logic needed now
         }
 
         function createPixel(rowIndex, colIndex, isHeart) {
@@ -449,7 +481,6 @@
                     pixelGrid.appendChild(pixel);
                 });
             });
-            // No heart fill status update needed now
         }
 
 
@@ -487,18 +518,14 @@
             `;
 
             // 4. Update Button Active State
+            // This is where the glow is triggered by applying the 'active' class
             document.querySelectorAll('.mood-btn[data-mood]').forEach(btn => {
                 btn.classList.remove('active');
             });
-            // We need to exclude the Random Word button which now uses a unique ID
             const activeMoodButton = document.querySelector(`.mood-btn[data-mood="${moodKey}"]`);
             if (activeMoodButton) {
                 activeMoodButton.classList.add('active');
             }
-
-            // 5. Update Lit Pixels with New Mood Shadow Color
-            // This is mostly deprecated now but we can keep the glow logic for 'darkened' pixels if desired.
-            // Since we are no longer using the glow based on mood color, we can remove this loop.
         }
 
         function handleMoodButtonClick(event) {
@@ -542,9 +569,9 @@
         // --- 7. INITIALIZATION ---
 
         window.onload = function() {
-            // Check for initial auth state (not strictly needed for this frontend-only app, but good practice)
-            const auth = {}; // Mock auth object
-            const userId = 'local-user'; // Mock user ID
+            // Mock auth (as Firebase setup is not required for this frontend-only app)
+            const auth = {}; 
+            const userId = 'local-user'; 
 
             // 1. Initialize Components
             initializePixelGrid();
